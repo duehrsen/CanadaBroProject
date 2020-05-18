@@ -23,9 +23,26 @@ namespace WebApplication1.Controllers
         /// </summary>
         /// <returns></returns>
         // GET: EmailReportPairs
-        public async Task<IActionResult> Index()
+/*        public async Task<IActionResult> Index()
         {
             return View(await _context.Pairs.ToListAsync());
+        }*/
+        
+        public async Task<IActionResult> Index(string id)
+        {
+            var pairs = from p in _context.Pairs
+                        select p;
+
+            if (!String.IsNullOrEmpty(id))
+            {
+                pairs = pairs.Where(e => e.Email.Contains(id));
+            }
+            //var constEmail = "chris@duehrsen.ca";
+
+
+            return View(await pairs.ToListAsync());
+
+        
         }
 
         /// <summary>
