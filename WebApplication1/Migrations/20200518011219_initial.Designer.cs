@@ -9,7 +9,7 @@ using WebApplication1.Models;
 namespace WebApplication1.Migrations
 {
     [DbContext(typeof(EmailReportPairContext))]
-    [Migration("20200517105022_initial")]
+    [Migration("20200518011219_initial")]
     partial class initial
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
