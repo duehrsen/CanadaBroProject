@@ -1,7 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.ServiceModel.Syndication;
+using System.Text;
 using System.Threading.Tasks;
+using System.Xml;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -199,6 +203,55 @@ namespace WebApplication1.Controllers
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
+
+        /// <summary>
+        /// Rss Feed
+        /// Learned from: https://mitchelsellers.com/blog/article/creating-an-rss-feed-in-asp-net-core-3-0
+        /// </summary>
+        /// <returns>Rss Feed</returns>
+        [ResponseCache(Duration = 1200)]
+        [HttpGet]
+        public IActionResult Rss()
+        {
+            //These are the global settings for the RSS feed. Lots of different options here
+            var feed = new SyndicationFeed("EmailReportRSS", "A list of things", new Uri("https://localhost:44316/EmailReportPairs/Rss"), "https://localhost:44316/Rss",DateTime.Now);
+            feed.Copyright = new TextSyndicationContent($"{DateTime.Now.Year} The Duehrsens");
+
+            var items = new List<SyndicationItem>();
+            var reportPairs = _context.Pairs;
+
+            // Adding individual items
+            foreach (var i in reportPairs)
+            {
+                var email = i.Email;
+                var report = i.ReportName;
+                items.Add(new SyndicationItem(email + ": " + report, report, new Uri("mailto://" + email)));
+            }
+
+            feed.Items = items;
+            var settings = new XmlWriterSettings
+            {
+                Encoding = Encoding.UTF8,
+                NewLineHandling = NewLineHandling.Entitize,
+                NewLineOnAttributes = true,
+                Indent = true
+            
+            };
+            using (var stream = new MemoryStream())
+            {
+                using (var xmlWriter = XmlWriter.Create(stream, settings))
+                {
+                    // Important: the second parameter makes the new weird link A10 shit. Set it to false
+                    var rssFormatter = new Rss20FeedFormatter(feed, false);
+                    rssFormatter.WriteTo(xmlWriter);
+                    xmlWriter.Flush();
+
+                }
+                return File(stream.ToArray(), "application/rss+xml; charset=utf-8");
+            }
+
+        }
+
 
         /// <summary>
         /// Check if pair exists
